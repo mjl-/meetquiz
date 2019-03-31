@@ -1,0 +1,198 @@
+<!doctype html>
+<html>
+	<head>
+		<title>meetquiz</title>
+		<style>
+* { margin: 0; padding: 0 }
+body { font-family: 'sans-serif'; font-size: 18px; }
+body { padding: 2rem; }
+.step { margin-bottom: 1rem; border: 1px solid gray; padding: 1rem; }
+p { margin-bottom: 1rem; }
+		</style>
+		<script src="meetquiz/sherpa.js"></script>
+	</head>
+	<body>
+		<div class="step" id="join" style="display: none">
+			<p>Enter your name</p>
+			<form onsubmit="return joinQuiz()">
+				<input type="text" name="name" id="name" required />
+				<button type="submit">Join quiz!</button>
+			</form>
+		</div>
+
+		<div class="step" id="waiting" style="display: none">
+			<p>You joined! Waiting for first question...</p>
+		</div>
+
+		<div class="step" id="question" style="display: none">
+			<p>Answers for question <span id="question-number"></span>:</p>
+
+			<div id="question-answers">
+				<div><button type="button" onclick="answer('Yes')">Yes</button></div>
+				<div><button type="button" onclick="answer('No')">No</button></div>
+			</div>
+		</div>
+
+		<div class="step" id="answered" style="display: none">
+			<p id="answered-answer">You answered XYZ to question 1!</p>
+		</div>
+
+		<div class="step" id="closed" style="display: none">
+			<p id="closed-ok">Waiting for answers...</p>
+			<p id="closed-late">O no! You were too late with your answer!</p>
+		</div>
+
+		<div class="step" id="answerresult" style="display: none">
+			<p id="answerresult-answer">TODO: You scored X points.</p>
+		</div>
+
+		<div class="step" id="ranking" style="display: none">
+			<p>Done!</p>
+		</div>
+
+		<script>
+var listen = function() {
+	if (!window.EventSource) {
+		alert('Your browser does not support server-sent events (SSE).')
+		return;
+	}
+
+	var events = new window.EventSource('/userevents');
+	events.addEventListener('open', function(e) {
+		console.log('events open', e);
+	});
+	events.addEventListener('error', function(e) {
+		console.log('events error', e);
+	});
+	events.addEventListener('message', function(e) {
+		// console.log('events message', e);
+		event = JSON.parse(e.data);
+		switch (event.Event) {
+		case 'questionOpen':
+			currentQuestion = event.Params.Question;
+			currentQuestionAnswered = false;
+			hide('waiting');
+			hide('answered');
+			hide('answerresult');
+			text('question-number', currentQuestion+1);
+			clear('question-answers');
+			var p = document.getElementById('question-answers');
+			var l = event.Params.AnswerLabels;
+			for (var i = 0; i < l.length; i++) {
+				(function(label) {
+					var e = document.createElement('div');
+					var b = document.createElement('button');
+					b.type = 'button';
+					b.textContent = label;
+					b.onclick = function() {
+						answer(label);
+					}
+					e.appendChild(b);
+					p.appendChild(e);
+				})(l[i]);
+			}
+			show('question');
+			break;
+
+		case 'questionClosed':
+			hide('question');
+			hide('answered');
+			hide('answerresult');
+			hide('closed-ok');
+			hide('closed-late');
+			if (currentQuestionAnswered) {
+				show('closed-ok');
+			} else {
+				show('closed-late');
+			}
+			show('closed');
+			break;
+
+		case 'answersShown':
+			hide('closed');
+			// text('answerresult-answer', 'xxx');
+			show('answerresult');
+			break;
+
+		case 'ranking':
+			hide('question');
+			hide('answered');
+			hide('answerresult');
+			show('ranking');
+			break;
+
+		default:
+			console.log('unknown event', event.Event, event);
+		}
+	});
+};
+listen();
+
+
+var hide = function(id) {
+	document.getElementById(id).style.display = 'none';
+};
+
+var show = function(id) {
+	document.getElementById(id).style.display = 'block';
+};
+
+var text = function(id, text) {
+	document.getElementById(id).textContent = text;
+};
+
+var clear = function(id) {
+	var e = document.getElementById(id);
+	while (e.firstChild) {
+		e.removeChild(e.firstChild);
+	}
+};
+
+var fail = function(err) {
+	console.log('error', err);
+	alert('Error: ' + err.message);
+};
+
+
+var sessionID;
+var currentQuestion = -1;
+var currentQuestionAnswered = false;
+
+meetquiz._wrapThenable = function(t) {
+	return new Promise(t);
+};
+
+var joinQuiz = function() {
+	console.log('joinQuiz');
+	var name = document.getElementById('name').value;
+	meetquiz.join(name)
+	.then(function(sessID) {
+		sessionID = sessID;
+		hide('join');
+		show('waiting');
+	})
+	.catch(function(err) {
+		fail(err);
+	});
+	return false;
+};
+
+var answer = function(label) {
+	hide('question');
+
+	meetquiz.answer(sessionID, currentQuestion, label)
+	.then(function() {
+		currentQuestionAnswered = true;
+		text('answered-answer', 'You answered ' + label + ' to question ' + (currentQuestion + 1) + '.');
+		show('answered-answer');
+		show('answered');
+	}, function(err) {
+		fail(err);
+	});
+};
+
+// Kick off.
+show('join');
+		</script>
+	</body>
+</html>

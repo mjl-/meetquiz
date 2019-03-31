@@ -1,0 +1,40 @@
+{
+	"Title": "Example quiz about Go",
+	"Questions": [
+		{
+			"Question": "In which year was Go 1.0 released?",
+			"Answers": [
+				{
+					"Label": "2010",
+					"Correct": false,
+					"Points": 0
+				},
+				{
+					"Label": "2011",
+					"Correct": false,
+					"Points": 0
+				},
+				{
+					"Label": "2012",
+					"Correct": true,
+					"Points": 1
+				}
+			]
+		},
+		{
+			"Question": "Is \"throw\" in Go?",
+			"Answers": [
+				{
+					"Label": "Yes",
+					"Correct": false,
+					"Points": 0
+				},
+				{
+					"Label": "No",
+					"Correct": true,
+					"Points": 1
+				}
+			]
+		}
+	]
+}

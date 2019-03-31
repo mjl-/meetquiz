@@ -1,0 +1,295 @@
+<!doctype html>
+<html>
+	<head>
+		<title>meetquiz</title>
+		<style>
+* { margin: 0; padding: 0 }
+body { font-family: 'sans-serif'; font-size: 18px; }
+body { padding: 2rem; }
+.step { margin-bottom: 1rem; border: 1px solid gray; padding: 1rem; }
+p { margin-bottom: 1rem; }
+
+.joineduser { margin: 0 0.25rem; }
+.answereduser { margin: 0 0.25rem; }
+		</style>
+		<script src="/meetquizpublic/sherpa.js"></script>
+	</head>
+	<body>
+		<div class="step" id="waiting" style="display: none">
+			<p>Welcome to the quiz, please wait until we open for signups.</p>
+
+			<div><button type="button" onclick="start()">Start</button></div>
+		</div>
+
+		<div class="step" id="signup" style="display: none">
+			<p>Welcome to quiz <span id="signup-title"></span>.</p>
+			<p>Please go to url, fill in your name and click Join.</p>
+
+			<p>
+				<span>Already joined: </span>
+				<span id="participants"></span>
+			</p>
+
+			<div><button type="button" onclick="next()">To first question!</button></div>
+		</div>
+
+		<div class="step" id="question" style="display: none">
+			<p id="question-text">here's a question: ABC</p>
+
+			<p><button type="button" onclick="showPossibleAnswers()" id="show-possible-answers">show possible answers</button></p>
+
+			<div id="possible-answers">
+			</div>
+			<br/>
+
+			<p id="answered">
+				Answered by... <span id="answered-by"></span>
+			</p>
+
+			<p><button type="button" onclick="closeQuestion()" id="close-answering">Close answering</button></p>
+
+			<p id="seconds-left">X seconds left</p>
+
+			<div id="question-closed">
+				<p>Closed for answering...</p>
+				<div><button type="button" onclick="answers()">To the answers!</button></div>
+			</div>
+		</div>
+
+		<div class="step" id="answer" style="display: none">
+			<p>Answers:</p>
+			<div id="answer-answers">
+				TODO
+				<div>Y people A. XXX (Correct)</div>
+				<div>X people B. YYY</div>
+				<div>Z people C. ZZZ</div>
+			</div>
+
+			<div><button type="button" onclick="next()">Continue</button></div>
+		</div>
+
+		<div class="step" id="done" style="display: none">
+			<p>Thanks for playing. How did we do?</p>
+			<div><button type="button" onclick="finalResults()">To results</button></div>
+		</div>
+
+		<div class="step" id="results" style="display: none">
+			<p>Ranking</p>
+			<ol id="ranking">
+				<li>name 1</li>
+				<li>name 2</li>
+				<li>name 3</li>
+			</ol>
+		</div>
+
+		<script>
+var listen = function() {
+	if (!window.EventSource) {
+		alert('Your browser does not support server-sent events (SSE).')
+		return;
+	}
+
+	var events = new window.EventSource('/publicevents');
+	events.addEventListener('open', function(e) {
+		console.log('events open', e);
+	});
+	events.addEventListener('error', function(e) {
+		console.log('events error', e);
+	});
+	events.addEventListener('message', function(e) {
+		// console.log('events message', e);
+		event = JSON.parse(e.data);
+		console.log('event', event);
+
+		switch (event.Event) {
+		case 'join':
+			var name = event.Params['Name'];
+			var p = document.getElementById('participants');
+			var span = document.createElement('span');
+			span.className = 'joineduser';
+			span.textContent = name;
+			p.appendChild(span);
+			break;
+
+		case 'answer':
+			var name = event.Params['Name'];
+			var p = document.getElementById('answered-by');
+			var span = document.createElement('span');
+			span.className = 'answereduser';
+			span.textContent = name;
+			p.appendChild(span);
+			break;
+
+		default:
+			console.log('unknown event', event.Event);
+		}
+	});
+};
+listen();
+
+
+var hide = function(id) {
+	document.getElementById(id).style.display = 'none';
+};
+
+var show = function(id) {
+	document.getElementById(id).style.display = 'block';
+};
+
+var text = function(id, text) {
+	document.getElementById(id).textContent = text;
+};
+
+var clear = function(id) {
+	var e = document.getElementById(id);
+	while (e.firstChild) {
+		e.removeChild(e.firstChild);
+	}
+};
+
+var fail = function(err) {
+	console.log('error', err);
+	alert('Error: ' + err.message);
+};
+
+
+var quizConfig;
+var currentQuestion = -1;
+var currentAnswerCounts;
+
+meetquizpublic._wrapThenable = function(t) {
+	return new Promise(t);
+};
+
+var start = function() {
+	meetquizpublic.quiz()
+	.then(function(qc) {
+		quizConfig = qc;
+		return meetquizpublic.start();
+	})
+	.then(function() {
+		hide('waiting');
+		text('signup-title', quizConfig.Title);
+		show('signup');
+	})
+	.catch(function(err) {
+		fail(err);
+	});
+};
+
+var openNextQuestion = function() {
+	hide('signup');
+	hide('answer');
+	currentQuestion += 1;
+	text('question-text', quizConfig.Questions[currentQuestion].Question);
+	clear('possible-answers');
+	hide('answered');
+	clear('answered-by');
+	hide('close-answering');
+	hide('seconds-left');
+	hide('question-closed');
+	show('question');
+	show('show-possible-answers');
+};
+
+var next = function() {
+	if (currentQuestion+1 < quizConfig.Questions.length) {
+		openNextQuestion();
+	} else {
+		hide('answer');
+		show('done');
+	}
+};
+
+var showPossibleAnswers = function() {
+	meetquizpublic.openNextQuestion()
+	.then(function() {
+		var q = quizConfig.Questions[currentQuestion];
+		var p = document.getElementById('possible-answers');
+		for (var i = 0; i < q.Answers.length; i++) {
+			var label = q.Answers[i].Label;
+			var e = document.createElement('div');
+			e.textContent = label;
+			p.appendChild(e);
+		}
+		show('possible-answers');
+		show('answered');
+		show('close-answering');
+	})
+	.catch(function(err) {
+		fail(err);
+	});
+};
+
+var closeQuestion = function() {
+	var secsleft = document.getElementById('seconds-left');
+	secsleft.textContent = '3 seconds left';
+	show('seconds-left');
+	setTimeout(function() {
+		secsleft.textContent = '2 seconds left';
+	}, 1 * 1000);
+	setTimeout(function() {
+		secsleft.textContent = '1 second left';
+	}, 2 * 1000);
+	setTimeout(function() {
+		hide('seconds-left');
+		meetquizpublic.closeQuestion()
+		.then(function(result) {
+			currentAnswerCounts = result.AnswerCounts;
+			show('question-closed');
+		})
+		.catch(function(err) {
+			fail(err);
+		});
+	}, 3 * 1000);
+};
+
+var answers = function() {
+	hide('question');
+	clear('answer-answers');
+	var p = document.getElementById('answer-answers');
+	var currentAnswers = quizConfig.Questions[currentQuestion].Answers;
+	for (var i = 0; i < currentAnswerCounts.length; i++) {
+		var ac = currentAnswerCounts[i];
+		var e = document.createElement('div');
+		var s = '';
+		s += ac.Count + 'x, ' + ac.Label;
+		if (currentAnswers[i].Correct) {
+			s += ' (Correct!)';
+		}
+		e.textContent = s;
+		p.appendChild(e);
+	}
+	show('answer');
+	meetquizpublic.showAnswers()
+	.then(function() {
+	})
+	.catch(function(err) {
+		fail(err);
+	});
+};
+
+var finalResults = function() {
+	hide('done');
+	meetquizpublic.finalResults()
+	.then(function(results) {
+		clear('ranking');
+		var p = document.getElementById('ranking');
+		for (var i = 0; i < results.Users.length; i++) {
+			var u = results.Users[i];
+			var e = document.createElement('div');
+			e.textContent = '' + u.Name + ' - ' + u.Score + ' points';
+			p.appendChild(e);
+		}
+		show('results');
+	})
+	.catch(function(err) {
+		fail(err);
+	});
+};
+
+// Kick off.
+show('waiting');
+		</script>
+	</body>
+</html>
