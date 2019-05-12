@@ -57,7 +57,7 @@ func publicEvents(w http.ResponseWriter, r *http.Request) {
 			err = writePublicEvent(w, e)
 			flusher.Flush()
 			if err != nil {
-				log.Println("writing event: %s\n", err)
+				log.Printf("writing event: %s\n", err)
 				return
 			}
 		case <-closenotify:
