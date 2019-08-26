@@ -7,15 +7,16 @@ import (
 	"net/http"
 	"os"
 
-	"bitbucket.org/mjl/httpasset"
-	"bitbucket.org/mjl/sherpa"
+	"github.com/mjl-/httpasset"
+	"github.com/mjl-/sherpa"
+	"github.com/mjl-/sherpadoc"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
 	address = flag.String("address", "localhost:8008", "address to listen on")
 
-	httpFS http.FileSystem
+	httpFS = httpasset.Init("assets")
 
 	meetquizVersion = "dev"
 
@@ -39,15 +40,6 @@ type QuizConfig struct {
 	Questions []Question
 }
 
-func init() {
-	log.SetFlags(0)
-	httpFS = httpasset.Fs()
-	if err := httpasset.Error(); err != nil {
-		log.Print("falling back to local assets")
-		httpFS = http.Dir("assets")
-	}
-}
-
 func check(err error, action string) {
 	if err != nil {
 		log.Fatalf("%s: %s\n", action, err)
@@ -55,6 +47,8 @@ func check(err error, action string) {
 }
 
 func main() {
+	log.SetFlags(0)
+
 	flag.Usage = func() {
 		log.Println("usage: meetquiz [flags]")
 		flag.PrintDefaults()
@@ -75,8 +69,8 @@ func main() {
 	http.Handle("/metrics", promhttp.Handler())
 	http.Handle("/", http.FileServer(httpFS))
 
-	parseSherpaDoc := func(name string) *sherpa.Doc {
-		doc := &sherpa.Doc{}
+	parseSherpaDoc := func(name string) *sherpadoc.Section {
+		doc := &sherpadoc.Section{}
 		ff, err := httpFS.Open(name)
 		check(err, "open sherpadoc json")
 		err = json.NewDecoder(ff).Decode(doc)

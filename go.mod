@@ -3,7 +3,8 @@ module github.com/mjl-/meetquiz
 go 1.12
 
 require (
-	bitbucket.org/mjl/httpasset v0.0.4
-	bitbucket.org/mjl/sherpa v0.5.3
+	github.com/mjl-/httpasset v0.0.6
+	github.com/mjl-/sherpa v0.6.0
+	github.com/mjl-/sherpadoc v0.0.0-20190611191149-bbb77419d1d2
 	github.com/prometheus/client_golang v0.9.2
 )
