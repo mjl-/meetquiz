@@ -4,8 +4,8 @@ github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0jegS5sx/RkqARlsWZ6pIwiU=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
-github.com/mjl-/httpasset v0.0.6 h1:CGucjWivzyqdAbT97kNidM17g0Dks34nfQuu0Bs6IdQ=
-github.com/mjl-/httpasset v0.0.6/go.mod h1:nqSduZ+k0SpxYx2JLFXjUNOX3IzzvKisR9YJ861q8ac=
+github.com/mjl-/httpasset v0.0.9 h1:AXO6fWExerKn08+sFnUR2ZySMQgcvsKD+S9PVA64pCo=
+github.com/mjl-/httpasset v0.0.9/go.mod h1:nqSduZ+k0SpxYx2JLFXjUNOX3IzzvKisR9YJ861q8ac=
 github.com/mjl-/sherpa v0.6.0 h1:lNu86b3htqJVhftOOxAxJwfIZ5Xuo6lz1ifiZZ096Do=
 github.com/mjl-/sherpa v0.6.0/go.mod h1:dSpAOdgpwdqQZ72O4n3EHo/tR68eKyan8tYYraUMPNc=
 github.com/mjl-/sherpadoc v0.0.0-20190505200843-c0a7f43f5f1d/go.mod h1:5khTKxoKKNXcB8bkVUO6GlzC7PFtMmkHq578lPbmnok=
